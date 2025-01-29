@@ -1,0 +1,18 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: ./api
+      dockerfile: dockerfile
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+  
+  db:
+    container_name: db
+    build:
+      context: ./db
+      dockerfile: dockerfile
+    ports:
+      - 6379:6379

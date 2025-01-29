@@ -11,6 +11,7 @@ func ResolveURL(c *fiber.Ctx) error{
 	r := database.CreateClient(0)
 	defer r.Close()
 
+	// check if the short mapping exists
 	value, err := r.Get(database.Ctx, url).Result()
 	if err == redis.Nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "short not found in the database"})
@@ -23,6 +24,7 @@ func ResolveURL(c *fiber.Ctx) error{
 
 	_ = rInr.Incr(database.Ctx, "counter")
 
+	// redirect to the mapped URL
 	return c.Redirect(value, 301)
 
 }

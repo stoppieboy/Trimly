@@ -1,12 +1,14 @@
 package routes
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stoppieboy/trimly/database"
 	"github.com/stoppieboy/trimly/helpers"
@@ -36,6 +38,7 @@ func ShortenURL(c *fiber.Ctx) error {
 	// implement rate limiting
 
 	r2 := database.CreateClient(1)
+	fmt.Println(r2.Ping(database.Ctx).Result())
 	defer r2.Close()
 
 	value, err := r2.Get(database.Ctx, c.IP()).Result()
@@ -67,7 +70,44 @@ func ShortenURL(c *fiber.Ctx) error {
 	// enforce https, SSL
 	body.URL = helpers.EnforceHTTPS(body.URL)
 
+
+	var id string
+
+	// generate a random URL if no custom short is provided
+	if body.CustomShort == "" {
+		id = uuid.New().String()[:6]
+	} else {
+		id = body.CustomShort
+	}
+
+	// check if the custom short is already taken
+	if checkShortTaken(id) {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Custom short already taken"})
+	}
+
+	// check if the expiry is valid
+	if body.Expiry == 0 {
+		body.Expiry = 24
+	}
+
+	err = r2.Set(database.Ctx, id, body.URL, body.Expiry*3600*time.Second).Err()
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Unable to connect to server"})
+	}
+	fmt.Println(id)
+
 	r2.Decr(database.Ctx, c.IP())
 
 	return nil
+}
+
+func checkShortTaken(short string) bool {
+	r := database.CreateClient(0)
+	defer r.Close()
+
+	val, _ := r.Get(database.Ctx, short).Result()
+	if val != "" {
+		return true
+	}
+	return false
 }

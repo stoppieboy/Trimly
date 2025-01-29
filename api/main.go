@@ -28,5 +28,7 @@ func main() {
 
 	setupRoutes(app)
 
+	port := os.Getenv("APP_PORT")
+	fmt.Println(port)
 	log.Fatal(app.Listen(os.Getenv("APP_PORT")))
 }
