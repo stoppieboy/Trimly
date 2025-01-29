@@ -4,6 +4,8 @@ A URL shortening service using Golang, Go-Fiber, Redis and containerized with do
 
 The API service Implements Rate limiting, Input Sanitization, and Custom Short URLs.
 
+These shortened URLs are especially valuable on platforms with character limits, like Twitter, or in marketing campaigns where a clean, branded link is more appealing.
+
 ## API Documentation
 
 ### Shorten URL
